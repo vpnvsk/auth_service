@@ -14,7 +14,7 @@ type serverAPI struct {
 	services services.Services
 }
 
-func Register(gRPC *grpc.Server, service services.Services) {
+func New(gRPC *grpc.Server, service services.Services) {
 	authv1.RegisterAuthServer(gRPC, &serverAPI{services: service})
 }
 
@@ -29,6 +29,7 @@ func (s *serverAPI) Login(ctx context.Context, req *authv1.LoginRequest) (*authv
 		return nil, status.Error(codes.InvalidArgument, "app id is invalid")
 	}
 	token, err := s.services.LoginUser(ctx, req.GetLogin(), req.GetPassword(), int(req.GetAppId()))
+	//TODO: handle exceptions more persistence
 	if err != nil {
 		return nil, status.Error(codes.Internal, "internal error")
 	}
@@ -53,7 +54,10 @@ func (s *serverAPI) IsAdmin(ctx context.Context, req *authv1.IsAdminRequest) (*a
 	if req.GetUuid() == "" {
 		return nil, status.Error(codes.InvalidArgument, "invalid id")
 	}
-	isAdmin, err := s.services.UserIsAdmin(ctx, req.GetUuid())
+	if req.GetAppId() == 0 {
+		return nil, status.Error(codes.InvalidArgument, "invalid argument")
+	}
+	isAdmin, err := s.services.UserIsAdmin(ctx, req.GetUuid(), int(req.GetAppId()))
 	if err != nil {
 		return nil, status.Error(codes.Internal, "internal error")
 	}

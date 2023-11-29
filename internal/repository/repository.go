@@ -4,6 +4,7 @@ import (
 	"auth_service/internal/models"
 	"context"
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 	"log/slog"
 )
 
@@ -12,22 +13,21 @@ type Repository interface {
 	Getter
 }
 type Repo struct {
-	log    *slog.Logger
-	saver  Saver
-	getter Getter
+	log *slog.Logger
+	Saver
+	Getter
 }
 
-func New(log *slog.Logger,
-	saver Saver,
-	getter Getter) *Repo {
-	return &Repo{log: log, saver: saver, getter: getter}
+func New(log *slog.Logger, db *sqlx.DB) *Repo {
+	return &Repo{log: log, Saver: NewDBSaver(log, db), Getter: NewDBReader(log, db)}
 }
 
 type Saver interface {
-	SaveUser(ctx context.Context, user models.User) (uuid.UUID, error)
+	SaveUser(ctx context.Context, login string, passwordHash []byte) (uuid.UUID, error)
 }
 
 type Getter interface {
-	GetUser(ctx context.Context, login, password string, addId int) (models.User, error)
-	IsAdmin(ctx context.Context, uuid string) (bool, error)
+	GetUser(ctx context.Context, login string) (models.User, error)
+	GetApp(ctx context.Context, id int) (models.App, error)
+	IsAdmin(ctx context.Context, uuid uuid.UUID, appId int) (bool, error)
 }

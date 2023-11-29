@@ -19,7 +19,6 @@ func main() {
 	log := setUpLogger(cfg.Env)
 	application := app.New(log, cfg.GRPC.Port, cfg.TokenTTL)
 	go application.GRPSServer.MustRun()
-	//TODO: server
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 	<-stop
